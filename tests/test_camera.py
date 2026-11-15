@@ -102,3 +102,28 @@ def test_large_photo_is_resized_to_calibrated_resolution(tmp_path):
 def test_needs_some_source():
     with pytest.raises(ValueError):
         FrameSource(None, None)
+
+
+def test_unusable_camera_frame_falls_back_to_file(tmp_path):
+    path = tmp_path / "photo.png"
+    cv2.imwrite(str(path), np.full((480, 640, 3), 200, np.uint8))
+
+    def crop(frame):
+        if frame[0, 0, 0] == 255:          # the camera frame
+            raise ValueError("no paper found")
+        return frame
+
+    src = FrameSource(0, image_path=path, retries=1, preprocess=crop,
+                      capture_factory=factory_from([FakeCapture()]), sleep=no_sleep)
+    assert src.read()[0, 0, 0] == 200
+    assert src.last_source == str(path)
+
+
+def test_unusable_frame_without_fallback_gives_clear_error():
+    def crop(frame):
+        raise ValueError("no paper found")
+
+    src = FrameSource(0, retries=1, preprocess=crop,
+                      capture_factory=factory_from([FakeCapture()]), sleep=no_sleep)
+    with pytest.raises(CameraError, match="camera frame has no white paper"):
+        src.read()

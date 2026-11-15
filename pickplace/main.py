@@ -18,7 +18,7 @@ from .calibration import PixelToRobot
 from .camera import CameraError, FrameSource
 from .cycle import CycleConfig, PickPlaceCycle
 from .robot import FakeRobot
-from .paper import PaperNotFound, rectify_paper
+from .paper import rectify_paper
 from .vision import annotate, detect_objects
 
 log = logging.getLogger("pickplace")
@@ -51,14 +51,27 @@ def main(argv=None) -> int:
                          preprocess=rectify_paper if args.paper else None)
     try:
         frame = source.read()
-    except (CameraError, PaperNotFound) as exc:
+    except CameraError as exc:
         log.error("%s", exc)
-        log.error("Connect a camera (--camera 0) or pass an existing image (--image path).")
+        log.error("Check the camera (--camera 0) or pass an existing image (--image path).")
         return 2
-    log.info("frame from %s", source.last_source)
+    used = source.last_source
+    log.info("frame from %s", used)
 
     # find the parts
     detections = detect_objects(frame)
+    if not detections and args.camera is not None and args.image is not None \
+            and used != str(args.image):
+        # the camera works but shows no parts, so use the image file instead
+        log.warning("camera frame has no objects -> using image file %s", args.image)
+        try:
+            frame = FrameSource(None, args.image,
+                                preprocess=rectify_paper if args.paper else None).read()
+        except CameraError as exc:
+            log.error("%s", exc)
+            return 2
+        used = str(args.image)
+        detections = detect_objects(frame)
     if not detections:
         log.warning("no parts detected")
 
@@ -80,7 +93,7 @@ def main(argv=None) -> int:
     log.info("annotated image saved to %s", out_img)
 
     result = {
-        "source": source.last_source,
+        "source": used,
         "parts": [
             {"pixel": {"u": d.center[0], "v": d.center[1], "angle_deg": d.angle_deg},
              "pick": asdict(t.pick), "approach": asdict(t.approach)}

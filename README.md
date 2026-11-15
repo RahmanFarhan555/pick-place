@@ -26,7 +26,8 @@ pip install -r requirements.txt
 # run on my test photo
 python -m pickplace.main --image data/test_photo.jpg --paper
 
-# use the webcam; if it fails, the program uses the photo
+# use the webcam; if there is no camera, or the camera sees no white paper
+# or no objects, the program uses the photo
 python -m pickplace.main --camera 0 --image data/test_photo.jpg --paper
 
 # make the first part fail 3 times to see the retry and the alarm
@@ -45,7 +46,7 @@ The program prints a table and saves these files in `results/`:
 pytest
 ```
 
-There are 95 tests and they need no hardware.
+There are 99 tests and they need no hardware.
 
 The tests cover:
 

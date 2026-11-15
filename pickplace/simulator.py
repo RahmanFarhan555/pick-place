@@ -28,7 +28,7 @@ from .calibration import PickTarget, PixelToRobot, Pose
 from .camera import CameraError, FrameSource
 from .cycle import CycleConfig, CycleResult, PickPlaceCycle
 from .robot import EmergencyStopError, FakeRobot
-from .paper import PaperNotFound, rectify_paper
+from .paper import rectify_paper
 from .vision import Detection, detect_objects, foreground_mask
 
 log = logging.getLogger(__name__)
@@ -591,7 +591,7 @@ def main(argv=None) -> int:
     try:
         photo = FrameSource(args.camera, args.image,
                             preprocess=rectify_paper if args.paper else None).read()
-    except (CameraError, PaperNotFound) as exc:
+    except CameraError as exc:
         log.error("%s", exc)
         return 2
     script = DEMO_SCRIPT if args.demo else Script()

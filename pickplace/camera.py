@@ -109,7 +109,10 @@ class FrameSource:
     def _normalize(self, frame: np.ndarray) -> np.ndarray:
         """Resize the frame to 640x480, because the calibration is for this size."""
         if self._preprocess is not None:
-            frame = self._preprocess(frame)
+            try:
+                frame = self._preprocess(frame)
+            except Exception as exc:
+                raise CameraError(f"camera frame has no white paper: {exc}") from exc
         w, h = self.target_size
         fh, fw = frame.shape[:2]
         if (fw, fh) == (w, h):
