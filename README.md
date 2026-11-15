@@ -15,6 +15,8 @@ camera.py -> vision.py -> calibration.py -> cycle.py (uses robot.py)
 You need Python 3.10 or newer.
 
 ```bash
+git clone https://github.com/RahmanFarhan555/pick-place.git
+cd pick-place
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
